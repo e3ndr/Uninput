@@ -1,0 +1,13 @@
+# IntelliJ
+*.iml
+.idea/
+
+# Eclipse
+.settings/
+.project
+.classpath
+.metadata
+
+# Common
+target/
+JNativeHook-2.2.2.x86_64.dll
