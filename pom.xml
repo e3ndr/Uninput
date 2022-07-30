@@ -91,19 +91,33 @@
 			<scope>compile</scope>
 		</dependency>
 
-		<!-- <dependency>
+		<!-- Transport -->
+		<dependency>
+			<groupId>org.java-websocket</groupId>
+			<artifactId>Java-WebSocket</artifactId>
+			<version>1.5.3</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-nop</artifactId>
+			<version>1.7.30</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
 			<groupId>io.undertow</groupId>
 			<artifactId>undertow-core</artifactId>
 			<version>2.2.18.Final</version>
 			<scope>compile</scope>
-		</dependency> -->
-
+		</dependency>
 		<dependency>
-			<groupId>com.github.casterlabs.rakurai</groupId>
-			<artifactId>Json</artifactId>
+			<groupId>com.github.casterlabs</groupId>
+			<artifactId>Rakurai</artifactId>
 			<version>1.14.3</version>
 			<scope>compile</scope>
 		</dependency>
+
+		<!-- Util -->
 		<dependency>
 			<groupId>com.github.kwhat</groupId>
 			<artifactId>jnativehook</artifactId>

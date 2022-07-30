@@ -11,7 +11,6 @@ import java.net.UnknownHostException;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 
-import co.casterlabs.rakurai.json.Rson;
 import lombok.Getter;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
 import xyz.e3ndr.uninput.BoundingBox.TouchResult;
@@ -37,6 +36,8 @@ public class Uninput implements Closeable {
     private BoundsHook boundsHook;
     private MouseHook mouseHook;
     private KeyboardHook keyboardHook;
+
+    private NetworkTransport network;
 
     @Getter
     private Config config;
@@ -68,6 +69,9 @@ public class Uninput implements Closeable {
         this.keyboardHook = new KeyboardHook(this);
 
         this.logger.info("This machine's hostname: %s", hostname);
+
+        this.network = new NetworkTransport(this);
+
         this.logger.info("Done! Server is open and listening on port %d.", config.getPort());
     }
 
@@ -79,10 +83,19 @@ public class Uninput implements Closeable {
                 this.logger.info("User panicked! (Pressed VK_END)");
                 this.restoreControl();
                 return;
+            } else if (e.getVk() == KeyEvent.VK_HOME) {
+                this.logger.info("User super panicked! Killing process. (Pressed VK_HOME)");
+                System.exit(1);
+                return;
             }
         }
 
-        this.logger.trace("Sent: %s", Rson.DEFAULT.toJson(event));
+        this.logger.trace("Sent: %s", event);
+    }
+
+    public void remoteEvent(UEvent event) {
+        this.logger.trace("Received: %s", event);
+
     }
 
     @Override
