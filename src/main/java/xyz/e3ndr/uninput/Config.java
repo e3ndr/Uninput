@@ -37,7 +37,7 @@ public class Config {
         JsonObject obj = e.getAsObject();
 
         for (Entry<String, JsonElement> entry : obj.entrySet()) {
-            if (!entry.getValue().isJsonObject()) return;
+            if (!entry.getValue().isJsonObject()) continue;
 
             String key = entry.getKey();
             BorderConfig value = Rson.DEFAULT.fromJson(entry.getValue(), BorderConfig.class);
