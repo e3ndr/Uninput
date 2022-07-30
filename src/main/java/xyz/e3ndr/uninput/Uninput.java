@@ -20,7 +20,11 @@ import xyz.e3ndr.uninput.BoundingBox.TouchResult;
 import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
+import xyz.e3ndr.uninput.events.UKeyboardReleaseEvent;
 import xyz.e3ndr.uninput.events.UMouseMoveEvent;
+import xyz.e3ndr.uninput.events.UMousePressEvent;
+import xyz.e3ndr.uninput.events.UMouseReleaseEvent;
+import xyz.e3ndr.uninput.events.UMouseWheelEvent;
 import xyz.e3ndr.uninput.events.USpawnEvent;
 import xyz.e3ndr.uninput.hooks.BoundsHook;
 import xyz.e3ndr.uninput.hooks.KeyboardHook;
@@ -123,10 +127,16 @@ public class Uninput implements Closeable {
             }
 
             case KEYBOARD_PRESS: {
+                UKeyboardPressEvent event = (UKeyboardPressEvent) e;
+
+                robot.keyPress(event.getVk());
                 return;
             }
 
             case KEYBOARD_RELEASE: {
+                UKeyboardReleaseEvent event = (UKeyboardReleaseEvent) e;
+
+                robot.keyRelease(event.getVk());
                 return;
             }
 
@@ -138,14 +148,25 @@ public class Uninput implements Closeable {
             }
 
             case MOUSE_PRESS: {
+                UMousePressEvent event = (UMousePressEvent) e;
+                int button = InputEvent.getMaskForButton(event.getButton());
+
+                robot.mousePress(button);
                 return;
             }
 
             case MOUSE_RELEASE: {
+                UMouseReleaseEvent event = (UMouseReleaseEvent) e;
+                int button = InputEvent.getMaskForButton(event.getButton());
+
+                robot.mouseRelease(button);
                 return;
             }
 
             case MOUSE_WHEEL: {
+                UMouseWheelEvent event = (UMouseWheelEvent) e;
+
+                robot.mouseWheel(event.getWheelDelta());
                 return;
             }
         }
