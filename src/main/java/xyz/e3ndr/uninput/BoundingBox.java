@@ -99,7 +99,7 @@ class Bounds {
         this.minY = from.y;
         this.maxX = from.x + from.width;
         this.maxY = from.y + from.height;
-        this.name = String.format("%s:%s", Uninput.hostname, name);
+        this.name = String.format("%s=%s", Uninput.hostname, name);
     }
 
     public @Nullable Border isTouchingBorder(int x, int y) {
