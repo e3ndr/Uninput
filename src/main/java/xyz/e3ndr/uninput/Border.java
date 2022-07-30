@@ -7,13 +7,14 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum Border {
     // @formatter:off
-    TOP     (  0,  10),
-    BOTTOM  (  0, -10),
-    LEFT    ( 10,   0),
-    RIGHT   (-10,   0);
+    TOP     (  0,  10, true ),
+    BOTTOM  (  0, -10, true ),
+    LEFT    ( 10,   0, false),
+    RIGHT   (-10,   0, false);
     // @formatter:on
 
     private int xSafe;
     private int ySafe;
+    private boolean isVertical;
 
 }

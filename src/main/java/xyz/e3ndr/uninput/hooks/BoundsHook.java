@@ -6,8 +6,7 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 import com.github.kwhat.jnativehook.mouse.NativeMouseInputListener;
 
-import kotlin.Pair;
-import xyz.e3ndr.uninput.Border;
+import xyz.e3ndr.uninput.BoundingBox.TouchResult;
 import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.Uninput;
 
@@ -34,16 +33,13 @@ public class BoundsHook implements Closeable {
             int x = nativeEvent.getX();
             int y = nativeEvent.getY();
 
-            Pair<Border, String> result = Uninput.box.isTouchingBorder(x, y);
+            TouchResult result = Uninput.box.isTouchingBorder(x, y);
             if (result == null) return;
 
-            Border touching = result.getFirst();
-            String displayId = result.getSecond();
+            BorderConfig borderConfig = uninput.getConfig().getBorders().get(result.displayName);
 
-            BorderConfig borderConfig = uninput.getConfig().getBorders().get(displayId);
-
-            if (touching == borderConfig.getBorder()) {
-                uninput.borderTouched(displayId, borderConfig);
+            if (result.touched == borderConfig.getBorder()) {
+                uninput.borderTouched(result, borderConfig);
             }
         }
 

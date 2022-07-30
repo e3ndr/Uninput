@@ -12,6 +12,7 @@ import co.casterlabs.rakurai.json.Rson;
 import co.casterlabs.rakurai.json.annotating.JsonClass;
 import co.casterlabs.rakurai.json.annotating.JsonField;
 import kotlin.Pair;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -47,7 +48,7 @@ public class BoundingBox {
         return Rson.DEFAULT.toJsonString(this);
     }
 
-    public @Nullable Pair<Border, String> isTouchingBorder(int x, int y) {
+    public @Nullable TouchResult isTouchingBorder(int x, int y) {
         List<Bounds> intersection = this.intersect(x, y);
 
         if (intersection.size() != 1) {
@@ -58,11 +59,27 @@ public class BoundingBox {
 
         Bounds b = intersection.get(0); // Remember, only 1 item.
         Border touching = b.isTouchingBorder(x, y);
-        String name = b.getName();
 
         if (touching == null) return null;
 
-        return new Pair<>(touching, name);
+        String name = b.getName();
+        double distance = 0;
+
+        Pair<Double, Double> vec = b.normVector(x, y);
+        if (touching.isVertical()) {
+            distance = vec.component1();
+        } else {
+            distance = vec.component2();
+        }
+
+        return new TouchResult(touching, name, distance);
+    }
+
+    @AllArgsConstructor
+    public static class TouchResult {
+        public final Border touched;
+        public final String displayName;
+        public final double distance;
     }
 
 }
@@ -110,6 +127,19 @@ class Bounds {
             && (x <= this.maxX)
             && (y >= this.minY)
             && (y <= this.maxY);
+    }
+
+    public Pair<Double, Double> normVector(int x, int y) {
+        double width = this.maxX - this.minX;
+        double height = this.maxY - this.minY;
+
+        int normX = x - this.minX;
+        int normY = y - this.minY;
+
+        double vecX = normX / width;
+        double vecY = normY / height;
+
+        return new Pair<>(vecX, vecY);
     }
 
 }

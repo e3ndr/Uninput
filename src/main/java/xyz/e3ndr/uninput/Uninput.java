@@ -14,6 +14,7 @@ import com.github.kwhat.jnativehook.NativeHookException;
 import co.casterlabs.rakurai.json.Rson;
 import lombok.Getter;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
+import xyz.e3ndr.uninput.BoundingBox.TouchResult;
 import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
@@ -116,13 +117,14 @@ public class Uninput implements Closeable {
         Inputter.moveMouseBack();
     }
 
-    public void borderTouched(String displayId, BorderConfig borderConfig) {
+    public void borderTouched(TouchResult result, BorderConfig borderConfig) {
         Border touched = borderConfig.getBorder();
 
         this.isMouseOnThisMachinesScreen = false;
         this.externalTarget = borderConfig.getTargetDisplay();
 
         this.logger.info("Touched border %s! Switching control to %s.", touched, this.externalTarget);
+        this.logger.debug("The mouse will have a distance of %.2f%%.", result.distance * 100);
 
         Inputter.moveMouseOffScreen(touched);
     }
