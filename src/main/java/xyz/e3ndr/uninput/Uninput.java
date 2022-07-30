@@ -129,6 +129,11 @@ public class Uninput implements Closeable {
             case SPAWN: {
                 USpawnEvent event = (USpawnEvent) e;
 
+                if (!this.isMouseOnThisMachinesScreen) {
+                    this.logger.info("Control given back by another machine.");
+                    this.restoreControl();
+                }
+
                 Point point = box.getSpawnLocation(event.getDisplay(), event.getBorder(), event.getDistance());
                 this.logger.info("Spawning cursor at %d,%d", point.x, point.y);
 
