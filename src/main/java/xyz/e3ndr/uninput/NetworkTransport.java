@@ -1,6 +1,9 @@
 package xyz.e3ndr.uninput;
 
+import java.awt.TrayIcon.MessageType;
+import java.net.ConnectException;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -92,15 +95,16 @@ public class NetworkTransport {
         this.server.start(); // Open up http://127.0.0.1:8080
     }
 
-    public void send(String targetName, UEvent event) {
+    public boolean send(String targetName, UEvent event) {
         Target target = this.targets.get(targetName);
 
         if ((target == null) || !target.isOpen()) {
             this.logger.warn("Unable to send event to %s, not connected.", targetName);
-            return;
+            return false;
         }
 
         target.send(Rson.DEFAULT.toJsonString(event));
+        return true;
     }
 
     @AllArgsConstructor
@@ -133,6 +137,8 @@ public class NetworkTransport {
         private FastLogger logger = new FastLogger();
         private String targetName;
 
+        private boolean hadConnected = false;
+
         public Target(URI serverUri, String targetName) {
             super(serverUri);
             this.targetName = targetName;
@@ -147,7 +153,9 @@ public class NetworkTransport {
 
         @Override
         public void onOpen(ServerHandshake handshakedata) {
+            this.hadConnected = true;
             this.logger.info("Connected to %s successfully.", this.targetName);
+            Tray.sendNotification("Uninput Connected", String.format("Connected to %s successfully.", this.targetName), MessageType.INFO);
         }
 
         @Override
@@ -155,7 +163,12 @@ public class NetworkTransport {
 
         @Override
         public void onClose(int code, String reason, boolean remote) {
-            this.logger.info("Disconnected from %s, isRemote=%b.", this.targetName, remote);
+            if (this.hadConnected) {
+                this.logger.info("Disconnected from %s, isRemote=%b.", this.targetName, remote);
+                Tray.sendNotification("Uninput Disconnected", String.format("Disconnected from %s, reconnecting.", this.targetName), MessageType.INFO);
+
+                this.hadConnected = false;
+            }
 
             new Thread(() -> {
                 try {
@@ -167,6 +180,9 @@ public class NetworkTransport {
 
         @Override
         public void onError(Exception ex) {
+            if (ex instanceof UnknownHostException) return;
+            if (ex instanceof ConnectException) return;
+
             this.logger.exception(ex);
         }
 

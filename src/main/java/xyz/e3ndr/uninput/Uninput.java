@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Robot;
 import java.awt.Toolkit;
+import java.awt.TrayIcon.MessageType;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.Closeable;
 import java.io.IOException;
@@ -91,6 +93,8 @@ public class Uninput implements Closeable {
         this.network = new NetworkTransport(this);
 
         this.logger.info("Done! Server is open and listening on port %d.", config.getPort());
+
+        Tray.sendNotification("Uninput Started", String.format("Uninput has started listening on %s:%d", hostname, config.getPort()), MessageType.INFO);
     }
 
     public void selfEvent(UEvent event) {
@@ -108,8 +112,14 @@ public class Uninput implements Closeable {
             }
         }
 
-        this.network.send(this.externalTarget, event);
         this.logger.trace("Sent: %s", event);
+        boolean result = this.network.send(this.externalTarget, event);
+
+        if (!result) {
+            Tray.sendNotification("Uninput Lost Connection", String.format("Lost connection to %s, stopping input.", this.externalTarget), MessageType.ERROR);
+            this.logger.info("Lost connection to %s, stopping input.", this.externalTarget);
+            this.restoreControl();
+        }
     }
 
     public void remoteEvent(UEvent e) {
