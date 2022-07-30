@@ -136,7 +136,7 @@ public class Uninput implements Closeable {
         Border touched = borderConfig.getBorder();
 
         this.isMouseOnThisMachinesScreen = false;
-        this.externalTarget = borderConfig.getTargetDisplay();
+        this.externalTarget = borderConfig.getTargetDisplay().split("=")[0];
 
         this.logger.info("Touched border %s! Switching control to %s.", touched, this.externalTarget);
         this.logger.debug("The mouse will have a distance of %.2f%%.", result.distance * 100);
