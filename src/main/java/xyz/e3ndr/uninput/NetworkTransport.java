@@ -20,6 +20,7 @@ import co.casterlabs.rakurai.io.http.websocket.WebsocketListener;
 import co.casterlabs.rakurai.io.http.websocket.WebsocketSession;
 import co.casterlabs.rakurai.json.Rson;
 import co.casterlabs.rakurai.json.element.JsonObject;
+import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
@@ -28,7 +29,7 @@ import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UEvent.UEventType;
 
 public class NetworkTransport {
-    private static final String WS_URL_FORMAT = "ws://%s:%d/uninput/ws";
+    private static final String WS_URL_FORMAT = "ws://%s:%d/uninput/ws?name=%s";
 
     private final Map<String, Target> targets = new HashMap<>();
     private final FastLogger logger = new FastLogger();
@@ -47,7 +48,7 @@ public class NetworkTransport {
             if (borderConfig == null) continue;
 
             String targetName = borderConfig.getTargetDisplay().split("=")[0];
-            URI uri = new URI(String.format(WS_URL_FORMAT, targetName, port));
+            URI uri = new URI(String.format(WS_URL_FORMAT, targetName, port, Uninput.hostname));
 
             this.targets.put(targetName, new Target(uri, targetName));
         }
@@ -71,7 +72,10 @@ public class NetworkTransport {
                     String path = session.getUri();
 
                     if (path.equals("/uninput/ws")) {
-                        return new RemoteListener();
+                        String name = session.getQueryParameters().get("name");
+                        if (name == null) return null;
+
+                        return new RemoteListener(name);
                     }
 
                     return null;
@@ -92,7 +96,19 @@ public class NetworkTransport {
         target.send(Rson.DEFAULT.toJsonString(event));
     }
 
+    @AllArgsConstructor
     private class RemoteListener implements WebsocketListener {
+        private String name;
+
+        @Override
+        public void onOpen(Websocket websocket) {
+            logger.info("%s connected.", this.name);
+        }
+
+        @Override
+        public void onClose(Websocket websocket) {
+            logger.info("%s disconnected.", this.name);
+        }
 
         @SneakyThrows
         @Override
