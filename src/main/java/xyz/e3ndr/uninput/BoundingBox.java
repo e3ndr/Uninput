@@ -120,6 +120,22 @@ public class BoundingBox {
         return new Point(x, y);
     }
 
+    public Rectangle getFullSize() {
+        int minX = 0;
+        int minY = 0;
+        int maxX = 0;
+        int maxY = 0;
+
+        for (Bounds bounds : this.bounds) {
+            if (bounds.getMinX() < minX) minX = bounds.getMinX();
+            if (bounds.getMinY() < minY) minY = bounds.getMinY();
+            if (bounds.getMaxX() > maxX) maxX = bounds.getMaxX();
+            if (bounds.getMaxY() > maxY) maxY = bounds.getMaxY();
+        }
+
+        return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+    }
+
     @AllArgsConstructor
     public static class TouchResult {
         public final Border touched;

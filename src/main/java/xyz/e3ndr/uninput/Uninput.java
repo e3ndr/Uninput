@@ -29,7 +29,6 @@ import xyz.e3ndr.uninput.events.UMouseReleaseEvent;
 import xyz.e3ndr.uninput.events.UMouseWheelEvent;
 import xyz.e3ndr.uninput.events.USpawnEvent;
 import xyz.e3ndr.uninput.hooks.BoundsHook;
-import xyz.e3ndr.uninput.hooks.KeyboardHook;
 import xyz.e3ndr.uninput.hooks.MouseHook;
 
 public class Uninput implements Closeable {
@@ -48,9 +47,10 @@ public class Uninput implements Closeable {
 
     private BoundsHook boundsHook;
     private MouseHook mouseHook;
-    private KeyboardHook keyboardHook;
 
     private NetworkTransport network;
+
+    private CaptureWindow window = new CaptureWindow(this);
 
     @Getter
     private Config config;
@@ -81,12 +81,13 @@ public class Uninput implements Closeable {
     public Uninput(Config config) throws Exception {
         this.config = config;
 
+        this.logger.debug("Full display area: %s", box.getFullSize());
+
         this.logger.info("Registering listeners.");
         GlobalScreen.registerNativeHook();
 
         this.boundsHook = new BoundsHook(this);
         this.mouseHook = new MouseHook(this);
-        this.keyboardHook = new KeyboardHook(this);
 
         this.logger.info("This machine's hostname: %s", hostname);
 
@@ -199,11 +200,6 @@ public class Uninput implements Closeable {
         } catch (Exception e) {
             this.logger.severe(e);
         }
-        try {
-            this.keyboardHook.close();
-        } catch (Exception e) {
-            this.logger.severe(e);
-        }
 
         try {
             GlobalScreen.unregisterNativeHook();
@@ -216,6 +212,7 @@ public class Uninput implements Closeable {
         this.logger.info("Switching control back to this machine and restoring cursor back to it's original position (+ 10px).");
         this.isMouseOnThisMachinesScreen = true;
         this.externalTarget = null;
+        this.window.disable();
         Inputter.unlockMouse();
     }
 
@@ -232,6 +229,7 @@ public class Uninput implements Closeable {
 
         this.selfEvent(new USpawnEvent(touched, result.distance, displayName));
 
+        this.window.enable();
         Inputter.lockMouse(touched);
     }
 
