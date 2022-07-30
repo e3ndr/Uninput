@@ -15,6 +15,6 @@ public enum Border {
 
     private int xSafe;
     private int ySafe;
-    private boolean isVertical;
+    private boolean isHorizontal;
 
 }

@@ -66,7 +66,7 @@ public class BoundingBox {
         double distance = 0;
 
         Pair<Double, Double> vec = b.normVector(x, y);
-        if (touching.isVertical()) {
+        if (touching.isHorizontal()) {
             distance = vec.component1();
         } else {
             distance = vec.component2();
