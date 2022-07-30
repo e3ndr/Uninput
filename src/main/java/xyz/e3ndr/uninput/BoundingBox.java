@@ -1,17 +1,34 @@
 package xyz.e3ndr.uninput;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
+import co.casterlabs.rakurai.json.Rson;
+import co.casterlabs.rakurai.json.annotating.JsonClass;
+import co.casterlabs.rakurai.json.annotating.JsonField;
+import kotlin.Pair;
 import lombok.Getter;
 import lombok.ToString;
 
 @Getter
 public class BoundingBox {
-    private List<Bounds> bounds = new ArrayList<>();
+    private @JsonField List<Bounds> bounds = new ArrayList<>();
+
+    public BoundingBox(Void aVoid) { // Differentiate the constructor from the Rson one.
+        GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        for (GraphicsDevice device : environment.getScreenDevices()) {
+            Rectangle bounds = device.getDefaultConfiguration().getBounds();
+            this.bounds.add(new Bounds(bounds, device.getIDstring()));
+        }
+    }
+
+    @Deprecated
+    public BoundingBox() {} // For Rson.
 
     private List<Bounds> intersect(int x, int y) {
         List<Bounds> result = new ArrayList<>(this.bounds.size());
@@ -25,16 +42,12 @@ public class BoundingBox {
         return result;
     }
 
-    public void add(Rectangle rect) {
-        this.bounds.add(new Bounds(rect));
-    }
-
     @Override
     public String toString() {
-        return this.bounds.toString();
+        return Rson.DEFAULT.toJsonString(this);
     }
 
-    public @Nullable Border isTouchingBorder(int x, int y) {
+    public @Nullable Pair<Border, String> isTouchingBorder(int x, int y) {
         List<Bounds> intersection = this.intersect(x, y);
 
         if (intersection.size() != 1) {
@@ -44,25 +57,32 @@ public class BoundingBox {
         }
 
         Bounds b = intersection.get(0); // Remember, only 1 item.
+        Border touching = b.isTouchingBorder(x, y);
+        String name = b.getName();
 
-        return b.isTouchingBorder(x, y);
+        if (touching == null) return null;
+
+        return new Pair<>(touching, name);
     }
 
 }
 
 @Getter
 @ToString
+@JsonClass(exposeAll = true)
 class Bounds {
     private int minX;
     private int minY;
     private int maxX;
     private int maxY;
+    private String name;
 
-    Bounds(Rectangle from) {
+    public Bounds(Rectangle from, String name) {
         this.minX = from.x;
         this.minY = from.y;
         this.maxX = from.x + from.width;
         this.maxY = from.y + from.height;
+        this.name = Uninput.hostname + name;
     }
 
     public @Nullable Border isTouchingBorder(int x, int y) {

@@ -1,37 +1,23 @@
 package xyz.e3ndr.uninput.hooks;
 
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
 import java.io.Closeable;
 
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 import com.github.kwhat.jnativehook.mouse.NativeMouseInputListener;
 
-import xyz.e3ndr.fastloggingframework.logging.FastLogger;
-import xyz.e3ndr.fastloggingframework.logging.LogLevel;
+import kotlin.Pair;
 import xyz.e3ndr.uninput.Border;
-import xyz.e3ndr.uninput.BoundingBox;
+import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.Uninput;
 
 public class BoundsHook implements Closeable {
     private Uninput uninput;
 
-    private BoundingBox box = new BoundingBox();
-    private Border switchAt;
-
     private Listener listener = new Listener();
 
-    public BoundsHook(Uninput uninput, Border switchAt) {
+    public BoundsHook(Uninput uninput) {
         this.uninput = uninput;
-        this.switchAt = switchAt;
-
-        GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        for (GraphicsDevice device : environment.getScreenDevices()) {
-            Rectangle bounds = device.getDefaultConfiguration().getBounds();
-            this.box.add(bounds);
-        }
 
         GlobalScreen.addNativeMouseMotionListener(this.listener);
     }
@@ -48,11 +34,16 @@ public class BoundsHook implements Closeable {
             int x = nativeEvent.getX();
             int y = nativeEvent.getY();
 
-            Border border = box.isTouchingBorder(x, y);
+            Pair<Border, String> result = Uninput.box.isTouchingBorder(x, y);
+            if (result == null) return;
 
-            if (border == switchAt) {
-                FastLogger.logStatic(LogLevel.DEBUG, "%s,%s", x, y);
-                uninput.borderTouched(border);
+            Border touching = result.getFirst();
+            String displayId = result.getSecond();
+
+            BorderConfig borderConfig = uninput.getConfig().getBorders().get(displayId);
+
+            if (touching == borderConfig.getBorder()) {
+                uninput.borderTouched(displayId, borderConfig);
             }
         }
 

@@ -11,3 +11,4 @@
 # Common
 target/
 JNativeHook-2.2.2.x86_64.dll
+config.json
