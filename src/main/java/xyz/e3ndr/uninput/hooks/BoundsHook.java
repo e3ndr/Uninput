@@ -37,6 +37,7 @@ public class BoundsHook implements Closeable {
             if (result == null) return;
 
             BorderConfig borderConfig = uninput.getConfig().getBorders().get(result.displayName);
+            if (borderConfig == null) return;
 
             if (result.touched == borderConfig.getBorder()) {
                 uninput.borderTouched(result, borderConfig);
