@@ -91,6 +91,7 @@ public class Uninput implements Closeable {
             }
         }
 
+        this.network.send(this.externalTarget, event);
         this.logger.trace("Sent: %s", event);
     }
 
