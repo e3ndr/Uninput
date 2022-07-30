@@ -39,7 +39,7 @@ public abstract class UEvent {
         private Class<? extends UEvent> eventClass;
 
         public static UEvent parseEvent(JsonObject eventJson) {
-            String eventType = eventJson.getString("event_type");
+            String eventType = eventJson.getString("type");
 
             try {
                 // 1) Lookup the event type

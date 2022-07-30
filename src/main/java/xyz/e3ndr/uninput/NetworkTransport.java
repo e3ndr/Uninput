@@ -148,7 +148,6 @@ public class NetworkTransport {
         @Override
         public void onOpen(ServerHandshake handshakedata) {
             this.logger.info("Connected to %s successfully.", this.targetName);
-
         }
 
         @Override
