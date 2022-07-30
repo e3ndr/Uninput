@@ -46,6 +46,7 @@ public class Uninput implements Closeable {
         String hst = "?";
         try {
             hst = InetAddress.getLocalHost().getHostName();
+            hst = hst.replace(".mshome.net", "");
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
