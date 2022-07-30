@@ -23,7 +23,9 @@ import co.casterlabs.rakurai.json.element.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import xyz.e3ndr.fastloggingframework.FastLoggingFramework;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
+import xyz.e3ndr.fastloggingframework.logging.LogLevel;
 import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UEvent.UEventType;
@@ -53,6 +55,9 @@ public class NetworkTransport {
             this.targets.put(targetName, new Target(uri, targetName));
         }
 
+        LogLevel defaultLevel = FastLoggingFramework.getDefaultLevel();
+        FastLoggingFramework.setDefaultLevel(LogLevel.INFO); // Silence Rakurai.
+
         // Open our listener.
         this.server = HttpServerBuilder
             .getUndertowBuilder()
@@ -81,6 +86,8 @@ public class NetworkTransport {
                     return null;
                 }
             });
+
+        FastLoggingFramework.setDefaultLevel(defaultLevel);
 
         this.server.start(); // Open up http://127.0.0.1:8080
     }
