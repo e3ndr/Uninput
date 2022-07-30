@@ -26,12 +26,13 @@ public abstract class UEvent {
     @AllArgsConstructor
     public static enum UEventType {
         // @formatter:off
+        SPAWN             (USpawnEvent.class          ),
         MOUSE_MOVE        (UMouseMoveEvent.class      ),
+        MOUSE_WHEEL       (UMouseWheelEvent.class     ),
         MOUSE_PRESS       (UMousePressEvent.class     ),
         MOUSE_RELEASE     (UMouseReleaseEvent.class   ),
-        MOUSE_WHEEL       (UMouseWheelEvent.class     ),
         KEYBOARD_PRESS    (UKeyboardPressEvent.class  ),
-        KEYBOARD_RELEASE  (UKeyboardReleaseEvent.class),
+        KEYBOARD_RELEASE  (UKeyboardReleaseEvent.class), 
         // @formatter:on
         ;
 

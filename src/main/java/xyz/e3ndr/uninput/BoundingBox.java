@@ -2,6 +2,7 @@ package xyz.e3ndr.uninput;
 
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,50 @@ public class BoundingBox {
         return new TouchResult(touching, name, distance);
     }
 
+    public Point getSpawnLocation(String displayName, Border border, double distance) {
+        Bounds bounds = null;
+
+        for (Bounds b : this.bounds) {
+            if (b.getName().contains(displayName)) {
+                bounds = b;
+                break;
+            }
+        }
+        if (bounds == null) return new Point(Uninput.targetX, Uninput.targetY);
+
+        int width = bounds.getWidth();
+        int height = bounds.getHeight();
+
+        int x = bounds.getMinX();
+        int y = bounds.getMinY();
+
+        if (border.isHorizontal()) {
+            x += width * distance;
+        } else {
+            y += height * distance;
+        }
+
+        switch (border) {
+            case TOP:
+            case LEFT:
+                break; // NOOP
+
+            case BOTTOM:
+                y += height;
+                break;
+
+            case RIGHT:
+                x += width;
+                break;
+
+        }
+
+        x += border.getXSafe();
+        y += border.getYSafe();
+
+        return new Point(x, y);
+    }
+
     @AllArgsConstructor
     public static class TouchResult {
         public final Border touched;
@@ -130,8 +175,8 @@ class Bounds {
     }
 
     public Pair<Double, Double> normVector(int x, int y) {
-        double width = this.maxX - this.minX;
-        double height = this.maxY - this.minY;
+        double width = this.getWidth();
+        double height = this.getHeight();
 
         int normX = x - this.minX;
         int normY = y - this.minY;
@@ -140,6 +185,14 @@ class Bounds {
         double vecY = normY / height;
 
         return new Pair<>(vecX, vecY);
+    }
+
+    public int getWidth() {
+        return this.maxX - this.minX;
+    }
+
+    public int getHeight() {
+        return this.maxY - this.minY;
     }
 
 }

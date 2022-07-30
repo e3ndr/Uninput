@@ -1,6 +1,8 @@
 package xyz.e3ndr.uninput;
 
 import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.io.Closeable;
@@ -12,11 +14,14 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 
 import lombok.Getter;
+import lombok.Lombok;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
 import xyz.e3ndr.uninput.BoundingBox.TouchResult;
 import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
+import xyz.e3ndr.uninput.events.UMouseMoveEvent;
+import xyz.e3ndr.uninput.events.USpawnEvent;
 import xyz.e3ndr.uninput.hooks.BoundsHook;
 import xyz.e3ndr.uninput.hooks.KeyboardHook;
 import xyz.e3ndr.uninput.hooks.MouseHook;
@@ -27,6 +32,8 @@ public class Uninput implements Closeable {
 
     public static final int targetX;
     public static final int targetY;
+
+    public static final Robot robot;
 
     private FastLogger logger = new FastLogger();
 
@@ -57,6 +64,12 @@ public class Uninput implements Closeable {
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         targetX = screenSize.width / 2;
         targetY = screenSize.height / 2;
+
+        try {
+            robot = new Robot();
+        } catch (Exception e) {
+            throw Lombok.sneakyThrow(e);
+        }
     }
 
     public Uninput(Config config) throws Exception {
@@ -95,9 +108,47 @@ public class Uninput implements Closeable {
         this.logger.trace("Sent: %s", event);
     }
 
-    public void remoteEvent(UEvent event) {
-        this.logger.trace("Received: %s", event);
+    public void remoteEvent(UEvent e) {
+        this.logger.trace("Received: %s", e);
 
+        switch (e.getType()) {
+            case SPAWN: {
+                USpawnEvent event = (USpawnEvent) e;
+
+                Point point = box.getSpawnLocation(event.getDisplay(), event.getBorder(), event.getDistance());
+                this.logger.info("Spawning cursor at %d,%d", point.x, point.y);
+
+                Inputter.start(point);
+                return;
+            }
+
+            case KEYBOARD_PRESS: {
+                return;
+            }
+
+            case KEYBOARD_RELEASE: {
+                return;
+            }
+
+            case MOUSE_MOVE: {
+                UMouseMoveEvent event = (UMouseMoveEvent) e;
+
+                Inputter.move(event.getXDelta(), event.getYDelta());
+                return;
+            }
+
+            case MOUSE_PRESS: {
+                return;
+            }
+
+            case MOUSE_RELEASE: {
+                return;
+            }
+
+            case MOUSE_WHEEL: {
+                return;
+            }
+        }
     }
 
     @Override
@@ -129,7 +180,7 @@ public class Uninput implements Closeable {
         this.logger.info("Switching control back to this machine and restoring cursor back to it's original position (+ 10px).");
         this.isMouseOnThisMachinesScreen = true;
         this.externalTarget = null;
-        Inputter.moveMouseBack();
+        Inputter.unlockMouse();
     }
 
     public void borderTouched(TouchResult result, BorderConfig borderConfig) {
@@ -141,7 +192,7 @@ public class Uninput implements Closeable {
         this.logger.info("Touched border %s! Switching control to %s.", touched, this.externalTarget);
         this.logger.debug("The mouse will have a distance of %.2f%%.", result.distance * 100);
 
-        Inputter.moveMouseOffScreen(touched);
+        Inputter.lockMouse(touched);
     }
 
 }
