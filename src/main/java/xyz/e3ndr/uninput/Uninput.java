@@ -185,12 +185,16 @@ public class Uninput implements Closeable {
 
     public void borderTouched(TouchResult result, BorderConfig borderConfig) {
         Border touched = borderConfig.getBorder();
+        String target = borderConfig.getTargetDisplay().split("=")[0];
+        String displayName = borderConfig.getTargetDisplay().split("=")[1];
 
         this.isMouseOnThisMachinesScreen = false;
-        this.externalTarget = borderConfig.getTargetDisplay().split("=")[0];
+        this.externalTarget = target;
 
         this.logger.info("Touched border %s! Switching control to %s.", touched, this.externalTarget);
         this.logger.debug("The mouse will have a distance of %.2f%%.", result.distance * 100);
+
+        this.selfEvent(new USpawnEvent(touched, result.distance, displayName));
 
         Inputter.lockMouse(touched);
     }
