@@ -16,6 +16,9 @@ import xyz.e3ndr.uninput.events.UMouseReleaseEvent;
 import xyz.e3ndr.uninput.events.UMouseWheelEvent;
 
 public class MouseHook implements Closeable {
+    public static volatile int currX = 0;
+    public static volatile int currY = 0;
+
     private Uninput uninput;
 
     private Listener listener = new Listener();
@@ -75,8 +78,11 @@ public class MouseHook implements Closeable {
                 return; // No movement.
             }
 
-            int xDelta = nativeEvent.getX() - Uninput.targetX;
-            int yDelta = nativeEvent.getY() - Uninput.targetY;
+            int xDelta = nativeEvent.getX() - currX;
+            int yDelta = nativeEvent.getY() - currY;
+
+            currX = x;
+            currY = y;
 
             uninput.selfEvent(new UMouseMoveEvent(xDelta, yDelta));
         }

@@ -3,6 +3,8 @@ package xyz.e3ndr.uninput;
 import java.awt.MouseInfo;
 import java.awt.Point;
 
+import xyz.e3ndr.uninput.hooks.MouseHook;
+
 public class Inputter {
     private static boolean isActive;
 
@@ -18,6 +20,8 @@ public class Inputter {
 
         new Thread(() -> {
             while (lastGoodPoint != null) {
+                MouseHook.currX = Uninput.targetX;
+                MouseHook.currY = Uninput.targetY;
                 Uninput.robot.mouseMove(Uninput.targetX, Uninput.targetY);
                 try {
                     Thread.sleep(200);
