@@ -67,6 +67,10 @@
 			<id>jitpack.io</id>
 			<url>https://jitpack.io</url>
 		</repository>
+		<repository>
+			<id>my-local-repo</id>
+			<url>file://${project.basedir}/lib</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -121,9 +125,8 @@
 		<dependency>
 			<groupId>com.github.kwhat</groupId>
 			<artifactId>jnativehook</artifactId>
-			<version>2.2.2</version>
-			<scope>system</scope>
-			<systemPath>${project.basedir}/jnativehook-2.2.2.jar</systemPath>
+			<version>2.2.2-local</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.github.e3ndr</groupId>
