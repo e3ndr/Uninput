@@ -9,10 +9,10 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
+import co.casterlabs.commons.functional.tuples.Pair;
 import co.casterlabs.rakurai.json.Rson;
 import co.casterlabs.rakurai.json.annotating.JsonClass;
 import co.casterlabs.rakurai.json.annotating.JsonField;
-import kotlin.Pair;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -68,9 +68,9 @@ public class BoundingBox {
 
         Pair<Double, Double> vec = b.normVector(x, y);
         if (touching.isHorizontal()) {
-            distance = vec.component1();
+            distance = vec.a();
         } else {
-            distance = vec.component2();
+            distance = vec.b();
         }
 
         return new TouchResult(touching, name, distance);
