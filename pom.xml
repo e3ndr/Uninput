@@ -68,8 +68,12 @@
 			<url>https://jitpack.io</url>
 		</repository>
 		<repository>
-			<id>my-local-repo</id>
+			<id>local-repo</id>
 			<url>file://${project.basedir}/lib</url>
+		</repository>
+		<repository>
+			<id>clojars</id>
+			<url>http://clojars.org/repo/</url>
 		</repository>
 	</repositories>
 
@@ -90,27 +94,15 @@
 
 		<!-- Transport -->
 		<dependency>
-			<groupId>org.java-websocket</groupId>
-			<artifactId>Java-WebSocket</artifactId>
-			<version>1.5.3</version>
+			<groupId>kryonet</groupId>
+			<artifactId>kryonet</artifactId>
+			<version>2.21</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-nop</artifactId>
-			<version>1.7.30</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.undertow</groupId>
-			<artifactId>undertow-core</artifactId>
-			<version>2.2.18.Final</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.github.casterlabs</groupId>
-			<artifactId>Rakurai</artifactId>
-			<version>1.15.0</version>
+			<groupId>com.esotericsoftware</groupId>
+			<artifactId>kryo</artifactId>
+			<version>5.3.0</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -131,6 +123,12 @@
 			<groupId>com.github.e3ndr</groupId>
 			<artifactId>FastLoggingFramework</artifactId>
 			<version>1.9.4</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.casterlabs.rakurai</groupId>
+			<artifactId>Json</artifactId>
+			<version>1.15.0</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>

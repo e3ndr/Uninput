@@ -124,8 +124,6 @@ public class Uninput implements Closeable {
     }
 
     public void remoteEvent(UEvent e) {
-        this.logger.trace("Received: %s", e);
-
         switch (e.getType()) {
             case SPAWN: {
                 USpawnEvent event = (USpawnEvent) e;

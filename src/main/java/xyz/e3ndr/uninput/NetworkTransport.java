@@ -1,46 +1,45 @@
 package xyz.e3ndr.uninput;
 
 import java.awt.TrayIcon.MessageType;
-import java.net.ConnectException;
-import java.net.URI;
-import java.net.UnknownHostException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
-import org.jetbrains.annotations.Nullable;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryonet.Client;
+import com.esotericsoftware.kryonet.Connection;
+import com.esotericsoftware.kryonet.Listener;
+import com.esotericsoftware.kryonet.Server;
 
-import co.casterlabs.rakurai.io.http.HttpResponse;
-import co.casterlabs.rakurai.io.http.HttpSession;
-import co.casterlabs.rakurai.io.http.StandardHttpStatus;
-import co.casterlabs.rakurai.io.http.server.HttpListener;
-import co.casterlabs.rakurai.io.http.server.HttpServer;
-import co.casterlabs.rakurai.io.http.server.HttpServerBuilder;
-import co.casterlabs.rakurai.io.http.websocket.Websocket;
-import co.casterlabs.rakurai.io.http.websocket.WebsocketListener;
-import co.casterlabs.rakurai.io.http.websocket.WebsocketSession;
-import co.casterlabs.rakurai.json.Rson;
-import co.casterlabs.rakurai.json.element.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.NonNull;
 import lombok.SneakyThrows;
-import xyz.e3ndr.fastloggingframework.FastLoggingFramework;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
-import xyz.e3ndr.fastloggingframework.logging.LogLevel;
 import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
-import xyz.e3ndr.uninput.events.UEvent.UEventType;
+import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
+import xyz.e3ndr.uninput.events.UKeyboardReleaseEvent;
+import xyz.e3ndr.uninput.events.UMouseMoveEvent;
+import xyz.e3ndr.uninput.events.UMousePressEvent;
+import xyz.e3ndr.uninput.events.UMouseWheelEvent;
+import xyz.e3ndr.uninput.events.USpawnEvent;
 
 public class NetworkTransport {
-    private static final String WS_URL_FORMAT = "ws://%s:%d/uninput/ws?name=%s";
-
     private final Map<String, Target> targets = new HashMap<>();
     private final FastLogger logger = new FastLogger();
 
     private Uninput uninput;
-    private HttpServer server;
+
+    public static void setupKryo(Kryo kryo) {
+        // We MUST retain this ordering. Kryo generates it's internal IDs using the
+        // registration order.
+        kryo.register(byte[].class);
+        kryo.register(UKeyboardPressEvent.class);
+        kryo.register(UKeyboardReleaseEvent.class);
+        kryo.register(UMouseMoveEvent.class);
+        kryo.register(UMousePressEvent.class);
+        kryo.register(UMouseWheelEvent.class);
+        kryo.register(USpawnEvent.class);
+    }
 
     @SneakyThrows
     public NetworkTransport(Uninput uninput) {
@@ -53,118 +52,97 @@ public class NetworkTransport {
             if (borderConfig == null) continue;
 
             String targetName = borderConfig.getTargetDisplay().split("=")[0];
-            URI uri = new URI(String.format(WS_URL_FORMAT, targetName, port, Uninput.hostname));
-
-            this.targets.put(targetName, new Target(uri, targetName));
+            this.targets.put(targetName, new Target(targetName, port, targetName));
         }
 
-        LogLevel defaultLevel = FastLoggingFramework.getDefaultLevel();
-        FastLoggingFramework.setDefaultLevel(LogLevel.INFO); // Silence Rakurai.
-
         // Open our listener.
-        this.server = HttpServerBuilder
-            .getUndertowBuilder()
-            .setPort(port)
-            .build(new HttpListener() {
-
-                @Override
-                public @Nullable HttpResponse serveSession(@NonNull String host, @NonNull HttpSession session, boolean secure) {
-                    return HttpResponse.newFixedLengthResponse(
-                        StandardHttpStatus.OK,
-                        "<!DOCTYPE html><html>Checkout <a href=\"https://github.com/e3ndr/uninput\">https://github.com/e3ndr/uninput</a> :^)</html>"
-                    );
-                }
-
-                @Override
-                public @Nullable WebsocketListener serveWebsocketSession(@NonNull String host, @NonNull WebsocketSession session, boolean secure) {
-                    String path = session.getUri();
-
-                    if (path.equals("/uninput/ws")) {
-                        String name = session.getQueryParameters().get("name");
-                        if (name == null) return null;
-
-                        return new RemoteListener(name);
-                    }
-
-                    return null;
-                }
-            });
-
-        FastLoggingFramework.setDefaultLevel(defaultLevel);
-
-        this.server.start(); // Open up http://127.0.0.1:8080
+        Server server = new Server();
+        setupKryo(server.getKryo());
+        server.addListener(new Listener() {
+            @Override
+            public void connected(Connection conn) {
+                conn.addListener(new RemoteListener());
+            }
+        });
+        server.start();
+        server.bind(port);
     }
 
     public boolean send(String targetName, UEvent event) {
         Target target = this.targets.get(targetName);
 
-        if ((target == null) || !target.isOpen()) {
+        if ((target == null) || !target.isAlive()) {
             this.logger.warn("Unable to send event to %s, not connected.", targetName);
             return false;
         }
 
-        target.send(Rson.DEFAULT.toJsonString(event));
+        target.send(event);
         return true;
     }
 
-    @AllArgsConstructor
-    private class RemoteListener implements WebsocketListener {
-        private String name;
+    private class RemoteListener extends Listener {
 
-        @Override
-        public void onOpen(Websocket websocket) {
-            logger.info("%s connected.", this.name);
+        public RemoteListener() {
+            logger.info("New client connected.");
         }
 
         @Override
-        public void onClose(Websocket websocket) {
-            logger.info("%s disconnected.", this.name);
+        public void disconnected(Connection conn) {
+            logger.info("Lost connection to a client.");
         }
 
-        @SneakyThrows
         @Override
-        public void onText(Websocket websocket, String raw) {
-            JsonObject message = Rson.DEFAULT.fromJson(raw, JsonObject.class);
+        public void received(Connection conn, Object obj) {
+            UEvent event = (UEvent) obj;
 
-            UEvent event = UEventType.parseEvent(message);
-
+            logger.trace("Received: %s", event);
             uninput.remoteEvent(event);
         }
 
     }
 
-    private class Target extends WebSocketClient {
+    private class Target extends Listener {
         private FastLogger logger = new FastLogger();
         private String targetName;
 
         private boolean hadConnected = false;
+        private Client client;
 
-        public Target(URI serverUri, String targetName) {
-            super(serverUri);
+        public Target(String hostname, int port, String targetName) {
             this.targetName = targetName;
             this.logger = new FastLogger(String.format("NetworkTarget: %s", this.targetName));
             targets.put(this.targetName, this);
 
-            this.setConnectionLostTimeout(5);
-            this.setReuseAddr(true);
-            this.setTcpNoDelay(true);
-            this.connect();
+            this.client = new Client();
+            setupKryo(this.client.getKryo());
+            this.client.start();
+            try {
+                this.client.connect(5000, hostname, port);
+            } catch (IOException e) {
+                e.printStackTrace();
+                this.disconnected(null);
+            }
+        }
+
+        public void send(UEvent event) {
+            this.client.sendTCP(event);
+        }
+
+        public boolean isAlive() {
+            return this.client.isConnected();
         }
 
         @Override
-        public void onOpen(ServerHandshake handshakedata) {
+        public void connected(Connection conn) {
             this.hadConnected = true;
             this.logger.info("Connected to %s successfully.", this.targetName);
             Tray.sendNotification("Uninput Connected", String.format("Connected to %s successfully.", this.targetName), MessageType.INFO);
         }
 
         @Override
-        public void onMessage(String raw) {} // This class is only used for sending!
-
-        @Override
-        public void onClose(int code, String reason, boolean remote) {
+        public void disconnected(Connection _1) {
             if (this.hadConnected) {
-                this.logger.info("Disconnected from %s, isRemote=%b.", this.targetName, remote);
+                this.logger.info("Disconnected from %s.", this.targetName);
                 Tray.sendNotification("Uninput Disconnected", String.format("Disconnected from %s, reconnecting.", this.targetName), MessageType.INFO);
 
                 this.hadConnected = false;
@@ -173,17 +151,9 @@ public class NetworkTransport {
             new Thread(() -> {
                 try {
                     TimeUnit.SECONDS.sleep(10);
-                } catch (InterruptedException ignored) {}
-                this.reconnect();
+                    this.client.reconnect();
+                } catch (Exception ignored) {}
             }).start();
-        }
-
-        @Override
-        public void onError(Exception ex) {
-            if (ex instanceof UnknownHostException) return;
-            if (ex instanceof ConnectException) return;
-
-            this.logger.exception(ex);
         }
 
     }
