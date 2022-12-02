@@ -2,6 +2,8 @@ package xyz.e3ndr.uninput;
 
 import java.awt.TrayIcon.MessageType;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -24,9 +26,9 @@ import xyz.e3ndr.uninput.events.UMouseWheelEvent;
 import xyz.e3ndr.uninput.events.USpawnEvent;
 
 public class NetworkTransport {
-    private final Map<String, Target> targets = new HashMap<>();
-    private final FastLogger logger = new FastLogger();
+    private static FastLogger logger = new FastLogger();
 
+    private Map<String, Target> targets = new HashMap<>();
     private Uninput uninput;
 
     public static void setupKryo(Kryo kryo) {
@@ -67,7 +69,7 @@ public class NetworkTransport {
         Target target = this.targets.get(targetName);
 
         if ((target == null) || !target.isAlive()) {
-            this.logger.warn("Unable to send event to %s, not connected.", targetName);
+            logger.warn("Unable to send event to %s, not connected.", targetName);
             return false;
         }
 
@@ -111,7 +113,7 @@ public class NetworkTransport {
             setupKryo(this.client.getKryo());
             this.client.start();
             try {
-                this.client.connect(5000, hostname, port);
+                this.client.connect(5000, resolve(hostname), port);
             } catch (IOException e) {
                 e.printStackTrace();
                 this.disconnected(null);
@@ -150,6 +152,20 @@ public class NetworkTransport {
             }).start();
         }
 
+    }
+
+    private static String resolve(String hostname) {
+        try {
+            String address = InetAddress
+                .getByName("www.example.com")
+                .getHostAddress();
+
+            logger.debug("Resolved: %s -> %s", hostname, address);
+
+            return address;
+        } catch (UnknownHostException e) {
+            return hostname;
+        }
     }
 
 }
