@@ -58,12 +58,7 @@ public class NetworkTransport {
         // Open our listener.
         Server server = new Server();
         setupKryo(server.getKryo());
-        server.addListener(new Listener() {
-            @Override
-            public void connected(Connection conn) {
-                conn.addListener(new RemoteListener());
-            }
-        });
+        server.addListener(new KryoServerListener());
         server.start();
         server.bind(port);
     }
@@ -80,9 +75,9 @@ public class NetworkTransport {
         return true;
     }
 
-    private class RemoteListener extends Listener {
-
-        public RemoteListener() {
+    private class KryoServerListener extends Listener {
+        @Override
+        public void connected(Connection conn) {
             logger.info("New client connected.");
         }
 
@@ -98,7 +93,6 @@ public class NetworkTransport {
             logger.trace("Received: %s", event);
             uninput.remoteEvent(event);
         }
-
     }
 
     private class Target extends Listener {
