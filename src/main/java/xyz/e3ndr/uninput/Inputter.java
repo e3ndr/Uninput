@@ -31,6 +31,8 @@ public class Inputter {
     }
 
     public static void unlockMouse() {
+        if (lastGoodPoint == null) return;
+
         int x = lastGoodPoint.x;
         int y = lastGoodPoint.y;
         lastGoodPoint = null;
