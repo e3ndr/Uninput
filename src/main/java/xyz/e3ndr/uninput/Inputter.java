@@ -20,8 +20,8 @@ public class Inputter {
 
         new Thread(() -> {
             while (lastGoodPoint != null) {
-                MouseHook.currX = Uninput.targetX;
-                MouseHook.currY = Uninput.targetY;
+                MouseHook.lastX = Uninput.targetX;
+                MouseHook.lastY = Uninput.targetY;
                 Uninput.robot.mouseMove(Uninput.targetX, Uninput.targetY);
                 try {
                     Thread.sleep(200);
