@@ -4,18 +4,20 @@ import xyz.e3ndr.uninput.Uninput;
 
 public class Inputter {
     private static volatile boolean isActive;
-    private static volatile int currX;
-    private static volatile int currY;
 
-    public static void start() {
-        currX = Uninput.centerX;
-        currY = Uninput.centerY;
-        Uninput.robot.mouseMove(currX, currY);
+    public static void start(int startX, int startY) {
+        Uninput.robot.mouseMove(startX, startY);
         isActive = true;
     }
 
     public static void move(int xDelta, int yDelta) {
-        if (!isActive) return;
+        if (!isActive) {
+            return;
+        }
+
+        int currX = MouseHook.localMouseX;
+        int currY = MouseHook.localMouseY;
+
         currX += xDelta;
         currY += yDelta;
         Uninput.robot.mouseMove(currX, currY);
