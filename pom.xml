@@ -92,20 +92,6 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- Transport -->
-		<dependency>
-			<groupId>kryonet</groupId>
-			<artifactId>kryonet</artifactId>
-			<version>2.21</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.esotericsoftware</groupId>
-			<artifactId>kryo</artifactId>
-			<version>5.3.0</version>
-			<scope>compile</scope>
-		</dependency>
-
 		<!-- Util -->
 		<dependency>
 			<groupId>com.github.kwhat</groupId>
@@ -135,6 +121,12 @@
 			<groupId>co.casterlabs.commons</groupId>
 			<artifactId>async</artifactId>
 			<version>1.9.0</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>co.casterlabs.commons</groupId>
+			<artifactId>io</artifactId>
+			<version>3f8687d</version>
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>

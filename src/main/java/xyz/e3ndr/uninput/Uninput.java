@@ -32,6 +32,7 @@ import xyz.e3ndr.uninput.hooks.BoundsHook;
 import xyz.e3ndr.uninput.hooks.CaptureWindow;
 import xyz.e3ndr.uninput.hooks.Inputter;
 import xyz.e3ndr.uninput.hooks.MouseHook;
+import xyz.e3ndr.uninput.net.NetworkTransport;
 
 @SuppressWarnings("resource")
 public class Uninput {
@@ -127,6 +128,10 @@ public class Uninput {
 
     public static void remoteEvent(UEvent e) {
         switch (e.getType()) {
+            case PING: {
+                return;
+            }
+
             case SPAWN: {
                 USpawnEvent event = (USpawnEvent) e;
 
