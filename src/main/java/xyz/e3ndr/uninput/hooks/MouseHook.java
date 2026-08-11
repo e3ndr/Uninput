@@ -44,7 +44,7 @@ public class MouseHook implements Closeable {
                 return;
             }
 
-            int button = nativeEvent.getButton();
+            int button = Uninput.mouseButtonSwap(nativeEvent.getButton());
 
             Uninput.selfEvent(new UMousePressEvent(button));
         }
@@ -55,7 +55,7 @@ public class MouseHook implements Closeable {
                 return;
             }
 
-            int button = nativeEvent.getButton();
+            int button = Uninput.mouseButtonSwap(nativeEvent.getButton());
 
             Uninput.selfEvent(new UMouseReleaseEvent(button));
         }

@@ -36,6 +36,8 @@ import xyz.e3ndr.uninput.net.NetworkTransport;
 
 @SuppressWarnings("resource")
 public class Uninput {
+    public static final boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+
     public static final String hostname;
     public static final BoundingBox box;
 
@@ -169,7 +171,7 @@ public class Uninput {
 
             case MOUSE_PRESS: {
                 UMousePressEvent event = (UMousePressEvent) e;
-                int button = InputEvent.getMaskForButton(event.getButton());
+                int button = InputEvent.getMaskForButton(mouseButtonSwap(event.getButton()));
 
                 robot.mousePress(button);
                 return;
@@ -177,7 +179,7 @@ public class Uninput {
 
             case MOUSE_RELEASE: {
                 UMouseReleaseEvent event = (UMouseReleaseEvent) e;
-                int button = InputEvent.getMaskForButton(event.getButton());
+                int button = InputEvent.getMaskForButton(mouseButtonSwap(event.getButton()));
 
                 robot.mouseRelease(button);
                 return;
@@ -239,6 +241,21 @@ public class Uninput {
 
         captureWindow.enable();
 //        Inputter.lockMouse(touched);
+    }
+
+    public static int mouseButtonSwap(int button) {
+        // On Windows, the left mouse button is 1, the right is 2, and the middle is 3.
+        // On Unix, the left is 1, the middle is 2, and the right is 3.
+        // So, we need to swap the right and middle mouse buttons on Windows.
+        if (Uninput.isWindows) {
+            if (button == 2) {
+                return 3;
+            } else if (button == 3) {
+                return 2;
+            }
+        }
+
+        return button;
     }
 
 }
