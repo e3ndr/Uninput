@@ -6,18 +6,14 @@ import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.mouse.NativeMouseEvent;
 import com.github.kwhat.jnativehook.mouse.NativeMouseInputListener;
 
-import xyz.e3ndr.uninput.BoundingBox.TouchResult;
-import xyz.e3ndr.uninput.Config.BorderConfig;
 import xyz.e3ndr.uninput.Uninput;
+import xyz.e3ndr.uninput.config.BoundingBox.TouchResult;
+import xyz.e3ndr.uninput.config.Config.BorderConfig;
 
 public class BoundsHook implements Closeable {
-    private Uninput uninput;
-
     private Listener listener = new Listener();
 
-    public BoundsHook(Uninput uninput) {
-        this.uninput = uninput;
-
+    public void init() {
         GlobalScreen.addNativeMouseMotionListener(this.listener);
     }
 
@@ -36,11 +32,11 @@ public class BoundsHook implements Closeable {
             TouchResult result = Uninput.box.isTouchingBorder(x, y);
             if (result == null) return;
 
-            BorderConfig borderConfig = uninput.getConfig().getBorders().get(result.displayName);
+            BorderConfig borderConfig = Uninput.config.borders.get(result.displayName);
             if (borderConfig == null) return;
 
             if (result.touched == borderConfig.getBorder()) {
-                uninput.borderTouched(result, borderConfig);
+                Uninput.borderTouched(result, borderConfig);
             }
         }
 

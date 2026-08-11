@@ -1,4 +1,4 @@
-package xyz.e3ndr.uninput;
+package xyz.e3ndr.uninput.config;
 
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -14,23 +14,20 @@ import co.casterlabs.rakurai.json.Rson;
 import co.casterlabs.rakurai.json.annotating.JsonClass;
 import co.casterlabs.rakurai.json.annotating.JsonField;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.ToString;
+import xyz.e3ndr.uninput.Uninput;
 
-@Getter
+@JsonClass(unsafeInstantiation = true)
 public class BoundingBox {
-    private @JsonField List<Bounds> bounds = new ArrayList<>();
+    public @JsonField List<Bounds> bounds = new ArrayList<>();
 
-    public BoundingBox(Void aVoid) { // Differentiate the constructor from the Rson one.
+    public BoundingBox() {
         GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
         for (GraphicsDevice device : environment.getScreenDevices()) {
             Rectangle bounds = device.getDefaultConfiguration().getBounds();
             this.bounds.add(new Bounds(bounds, device.getIDstring()));
         }
     }
-
-    @Deprecated
-    public BoundingBox() {} // For Rson.
 
     private List<Bounds> intersect(int x, int y) {
         List<Bounds> result = new ArrayList<>(this.bounds.size());
@@ -46,7 +43,7 @@ public class BoundingBox {
 
     @Override
     public String toString() {
-        return Rson.DEFAULT.toJsonString(this);
+        return Rson.DEFAULT.toJson(this).toString();
     }
 
     public @Nullable TouchResult isTouchingBorder(int x, int y) {
@@ -63,7 +60,7 @@ public class BoundingBox {
 
         if (touching == null) return null;
 
-        String name = b.getName();
+        String name = b.name;
         double distance = 0;
 
         Pair<Double, Double> vec = b.normVector(x, y);
@@ -80,18 +77,18 @@ public class BoundingBox {
         Bounds bounds = null;
 
         for (Bounds b : this.bounds) {
-            if (b.getName().contains(displayName)) {
+            if (b.name.contains(displayName)) {
                 bounds = b;
                 break;
             }
         }
-        if (bounds == null) return new Point(Uninput.targetX, Uninput.targetY);
+        if (bounds == null) return new Point(Uninput.centerX, Uninput.centerY);
 
         int width = bounds.getWidth();
         int height = bounds.getHeight();
 
-        int x = bounds.getMinX();
-        int y = bounds.getMinY();
+        int x = bounds.minX;
+        int y = bounds.minY;
 
         if (border.isHorizontal()) {
             x += width * distance;
@@ -127,10 +124,10 @@ public class BoundingBox {
         int maxY = 0;
 
         for (Bounds bounds : this.bounds) {
-            if (bounds.getMinX() < minX) minX = bounds.getMinX();
-            if (bounds.getMinY() < minY) minY = bounds.getMinY();
-            if (bounds.getMaxX() > maxX) maxX = bounds.getMaxX();
-            if (bounds.getMaxY() > maxY) maxY = bounds.getMaxY();
+            if (bounds.minX < minX) minX = bounds.minX;
+            if (bounds.minY < minY) minY = bounds.minY;
+            if (bounds.maxX > maxX) maxX = bounds.maxX;
+            if (bounds.maxY > maxY) maxY = bounds.maxY;
         }
 
         return new Rectangle(minX, minY, maxX - minX, maxY - minY);
@@ -145,15 +142,14 @@ public class BoundingBox {
 
 }
 
-@Getter
 @ToString
 @JsonClass(exposeAll = true)
 class Bounds {
-    private int minX;
-    private int minY;
-    private int maxX;
-    private int maxY;
-    private String name;
+    public int minX;
+    public int minY;
+    public int maxX;
+    public int maxY;
+    public String name;
 
     public Bounds(Rectangle from, String name) {
         this.minX = from.x;

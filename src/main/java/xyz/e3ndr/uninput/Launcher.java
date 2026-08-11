@@ -7,13 +7,12 @@ import java.nio.file.Path;
 import co.casterlabs.rakurai.json.Rson;
 import xyz.e3ndr.fastloggingframework.FastLoggingFramework;
 import xyz.e3ndr.fastloggingframework.logging.LogLevel;
+import xyz.e3ndr.uninput.config.Config;
 
 public class Launcher {
     private static final Path CONFIG_PATH = new File("config.json").toPath();
 
     public static void main(String[] args) throws Exception {
-//        ConsoleUtil.summonConsoleWindow();
-
         FastLoggingFramework.setDefaultLevel(LogLevel.DEBUG);
         FastLoggingFramework.setColorEnabled(false);
 
@@ -37,7 +36,7 @@ public class Launcher {
                 .toString(true)
         );
 
-        Uninput uninput = new Uninput(config);
+        Uninput.init(config);
 
         Thread.sleep(Long.MAX_VALUE);
     }

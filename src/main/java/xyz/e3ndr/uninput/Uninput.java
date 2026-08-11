@@ -1,13 +1,11 @@
 package xyz.e3ndr.uninput;
 
 import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.TrayIcon.MessageType;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -15,11 +13,13 @@ import java.net.UnknownHostException;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 
-import lombok.Getter;
 import lombok.Lombok;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
-import xyz.e3ndr.uninput.BoundingBox.TouchResult;
-import xyz.e3ndr.uninput.Config.BorderConfig;
+import xyz.e3ndr.uninput.config.Border;
+import xyz.e3ndr.uninput.config.BoundingBox;
+import xyz.e3ndr.uninput.config.BoundingBox.TouchResult;
+import xyz.e3ndr.uninput.config.Config;
+import xyz.e3ndr.uninput.config.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
 import xyz.e3ndr.uninput.events.UKeyboardReleaseEvent;
@@ -29,31 +29,31 @@ import xyz.e3ndr.uninput.events.UMouseReleaseEvent;
 import xyz.e3ndr.uninput.events.UMouseWheelEvent;
 import xyz.e3ndr.uninput.events.USpawnEvent;
 import xyz.e3ndr.uninput.hooks.BoundsHook;
+import xyz.e3ndr.uninput.hooks.CaptureWindow;
+import xyz.e3ndr.uninput.hooks.Inputter;
 import xyz.e3ndr.uninput.hooks.MouseHook;
 
-public class Uninput implements Closeable {
+@SuppressWarnings("resource")
+public class Uninput {
     public static final String hostname;
     public static final BoundingBox box;
 
-    public static final int targetX;
-    public static final int targetY;
+    public static final int centerX;
+    public static final int centerY;
 
     public static final Robot robot;
 
-    private FastLogger logger = new FastLogger();
+    private static FastLogger logger = new FastLogger();
 
-    private @Getter boolean isMouseOnThisMachinesScreen = true;
-    private @Getter String externalTarget = null;
+    public static boolean isMouseOnThisMachinesScreen = true;
+    public static String externalTarget = null;
 
-    private BoundsHook boundsHook;
-    private MouseHook mouseHook;
+    private static BoundsHook boundsHook = new BoundsHook();
+    private static MouseHook mouseHook = new MouseHook();
+    private static NetworkTransport network = new NetworkTransport();
+    private static CaptureWindow captureWindow = new CaptureWindow();
 
-    private NetworkTransport network;
-
-    private CaptureWindow window = new CaptureWindow(this);
-
-    @Getter
-    private Config config;
+    public static Config config;
 
     static {
         String hst = "?";
@@ -65,11 +65,11 @@ public class Uninput implements Closeable {
         }
         hostname = hst;
 
-        box = new BoundingBox(null);
+        box = new BoundingBox();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        targetX = screenSize.width / 2;
-        targetY = screenSize.height / 2;
+        centerX = screenSize.width / 2;
+        centerY = screenSize.height / 2;
 
         try {
             robot = new Robot();
@@ -78,65 +78,67 @@ public class Uninput implements Closeable {
         }
     }
 
-    public Uninput(Config config) throws Exception {
-        this.config = config;
+    public static void init(Config config) throws Exception {
+        Uninput.config = config;
 
-        this.logger.debug("Full display area: %s", box.getFullSize());
+        logger.debug("Full display area: %s", box.getFullSize());
 
-        this.logger.info("Registering listeners.");
+        logger.info("Registering listeners.");
         GlobalScreen.registerNativeHook();
 
-        this.boundsHook = new BoundsHook(this);
-        this.mouseHook = new MouseHook(this);
+        logger.info("This machine's hostname: %s", hostname);
 
-        this.logger.info("This machine's hostname: %s", hostname);
+        network.init();
+        captureWindow.init();
+        mouseHook.init();
+        boundsHook.init();
 
-        this.network = new NetworkTransport(this);
+        logger.info("Done! Server is open and listening on port %d.", config.port);
 
-        this.logger.info("Done! Server is open and listening on port %d.", config.getPort());
-
-        Tray.sendNotification("Uninput Started", String.format("Uninput has started listening on %s:%d", hostname, config.getPort()), MessageType.INFO);
+        Tray.sendNotification("Uninput Started", String.format("Uninput has started listening on %s:%d", hostname, config.port), MessageType.INFO);
     }
 
-    public void selfEvent(UEvent event) {
+    public static void selfEvent(UEvent event) {
         if (event instanceof UKeyboardPressEvent) {
             UKeyboardPressEvent e = (UKeyboardPressEvent) event;
 
             if (e.getVk() == KeyEvent.VK_END) {
-                this.logger.info("User panicked! (Pressed VK_END)");
-                this.restoreControl();
+                logger.info("User panicked! (Pressed VK_END)");
+                restoreControl();
                 return;
             } else if (e.getVk() == KeyEvent.VK_HOME) {
-                this.logger.info("User super panicked! Killing process. (Pressed VK_HOME)");
+                logger.info("User super panicked! Killing process. (Pressed VK_HOME)");
                 System.exit(1);
                 return;
             }
         }
 
-        this.logger.trace("Sent: %s", event);
-        boolean result = this.network.send(this.externalTarget, event);
+        if (externalTarget == null) return;
+
+        logger.trace("Sent: %s", event);
+        boolean result = network.send(externalTarget, event);
 
         if (!result) {
-            Tray.sendNotification("Uninput Lost Connection", String.format("Lost connection to %s, stopping input.", this.externalTarget), MessageType.ERROR);
-            this.logger.info("Lost connection to %s, stopping input.", this.externalTarget);
-            this.restoreControl();
+            Tray.sendNotification("Uninput Lost Connection", String.format("Lost connection to %s, stopping input.", externalTarget), MessageType.ERROR);
+            logger.info("Lost connection to %s, stopping input.", externalTarget);
+            restoreControl();
         }
     }
 
-    public void remoteEvent(UEvent e) {
+    public static void remoteEvent(UEvent e) {
         switch (e.getType()) {
             case SPAWN: {
                 USpawnEvent event = (USpawnEvent) e;
 
-                if (!this.isMouseOnThisMachinesScreen) {
-                    this.logger.info("Control given back by another machine.");
-                    this.restoreControl();
+                if (!isMouseOnThisMachinesScreen) {
+                    logger.info("Control given back by another machine.");
+                    restoreControl();
                 }
 
-                Point point = box.getSpawnLocation(event.getDisplay(), event.getBorder(), event.getDistance());
-                this.logger.info("Spawning cursor at %d,%d", point.x, point.y);
+//                Point point = box.getSpawnLocation(event.getDisplay(), event.getBorder(), event.getDistance());
+                logger.info("Spawning cursor at %d,%d", centerX, centerY);
 
-                Inputter.start(point);
+                Inputter.start();
                 return;
             }
 
@@ -186,17 +188,16 @@ public class Uninput implements Closeable {
         }
     }
 
-    @Override
-    public void close() throws IOException {
+    public static void close() throws IOException {
         try {
-            this.boundsHook.close();
+            boundsHook.close();
         } catch (Exception e) {
-            this.logger.severe(e);
+            logger.severe(e);
         }
         try {
-            this.mouseHook.close();
+            mouseHook.close();
         } catch (Exception e) {
-            this.logger.severe(e);
+            logger.severe(e);
         }
 
         try {
@@ -206,29 +207,29 @@ public class Uninput implements Closeable {
         }
     }
 
-    public void restoreControl() {
-        this.logger.info("Switching control back to this machine and restoring cursor back to it's original position (+ 10px).");
-        this.isMouseOnThisMachinesScreen = true;
-        this.externalTarget = null;
-        this.window.disable();
-        Inputter.unlockMouse();
+    public static void restoreControl() {
+        logger.info("Switching control back to this machine and restoring cursor back to it's original position (+ 10px).");
+        isMouseOnThisMachinesScreen = true;
+        externalTarget = null;
+        captureWindow.disable();
+//        Inputter.unlockMouse();
     }
 
-    public void borderTouched(TouchResult result, BorderConfig borderConfig) {
+    public static void borderTouched(TouchResult result, BorderConfig borderConfig) {
         Border touched = borderConfig.getBorder();
         String target = borderConfig.getTargetDisplay().split("=")[0];
         String displayName = borderConfig.getTargetDisplay().split("=")[1];
 
-        this.isMouseOnThisMachinesScreen = false;
-        this.externalTarget = target;
+        isMouseOnThisMachinesScreen = false;
+        externalTarget = target;
 
-        this.logger.info("Touched border %s! Switching control to %s.", touched, this.externalTarget);
-        this.logger.debug("The mouse will have a distance of %.2f%%.", result.distance * 100);
+        logger.info("Touched border %s! Switching control to %s.", touched, externalTarget);
+        logger.debug("The mouse will have a distance of %.2f%%.", result.distance * 100);
 
-        this.selfEvent(new USpawnEvent(touched, result.distance, displayName));
+        selfEvent(new USpawnEvent(touched, result.distance, displayName));
 
-        this.window.enable();
-        Inputter.lockMouse(touched);
+        captureWindow.enable();
+//        Inputter.lockMouse(touched);
     }
 
 }

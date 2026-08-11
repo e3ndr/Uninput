@@ -1,4 +1,4 @@
-package xyz.e3ndr.uninput;
+package xyz.e3ndr.uninput.config;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

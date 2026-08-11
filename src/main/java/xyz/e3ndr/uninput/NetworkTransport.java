@@ -16,12 +16,14 @@ import com.esotericsoftware.kryonet.Server;
 
 import lombok.SneakyThrows;
 import xyz.e3ndr.fastloggingframework.logging.FastLogger;
-import xyz.e3ndr.uninput.Config.BorderConfig;
+import xyz.e3ndr.uninput.config.Border;
+import xyz.e3ndr.uninput.config.Config.BorderConfig;
 import xyz.e3ndr.uninput.events.UEvent;
 import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
 import xyz.e3ndr.uninput.events.UKeyboardReleaseEvent;
 import xyz.e3ndr.uninput.events.UMouseMoveEvent;
 import xyz.e3ndr.uninput.events.UMousePressEvent;
+import xyz.e3ndr.uninput.events.UMouseReleaseEvent;
 import xyz.e3ndr.uninput.events.UMouseWheelEvent;
 import xyz.e3ndr.uninput.events.USpawnEvent;
 
@@ -29,32 +31,28 @@ public class NetworkTransport {
     private static FastLogger logger = new FastLogger();
 
     private Map<String, Target> targets = new HashMap<>();
-    private Uninput uninput;
 
     public static void setupKryo(Kryo kryo) {
         // We MUST retain this ordering. Kryo generates it's internal IDs using the
         // registration order.
-        kryo.register(byte[].class);
+        kryo.register(Border.class);
         kryo.register(UKeyboardPressEvent.class);
         kryo.register(UKeyboardReleaseEvent.class);
         kryo.register(UMouseMoveEvent.class);
         kryo.register(UMousePressEvent.class);
+        kryo.register(UMouseReleaseEvent.class);
         kryo.register(UMouseWheelEvent.class);
         kryo.register(USpawnEvent.class);
     }
 
     @SneakyThrows
-    public NetworkTransport(Uninput uninput) {
-        this.uninput = uninput;
-
-        int port = this.uninput.getConfig().getPort();
-
+    public void init() {
         // Connect to all of the targets.
-        for (BorderConfig borderConfig : this.uninput.getConfig().getBorders().values()) {
+        for (BorderConfig borderConfig : Uninput.config.borders.values()) {
             if (borderConfig == null) continue;
 
             String targetName = borderConfig.getTargetDisplay().split("=")[0];
-            this.targets.put(targetName, new Target(targetName, port, targetName));
+            this.targets.put(targetName, new Target(targetName, Uninput.config.port, targetName));
         }
 
         // Open our listener.
@@ -62,7 +60,7 @@ public class NetworkTransport {
         setupKryo(server.getKryo());
         server.addListener(new KryoServerListener());
         server.start();
-        server.bind(port);
+        server.bind(Uninput.config.port);
     }
 
     public boolean send(String targetName, UEvent event) {
@@ -90,10 +88,11 @@ public class NetworkTransport {
 
         @Override
         public void received(Connection conn, Object obj) {
-            UEvent event = (UEvent) obj;
-
-            logger.trace("Received: %s", event);
-            uninput.remoteEvent(event);
+            if (obj instanceof UEvent) {
+                UEvent event = (UEvent) obj;
+                logger.trace("Received: %s", event);
+                Uninput.remoteEvent(event);
+            }
         }
     }
 
@@ -157,7 +156,7 @@ public class NetworkTransport {
     private static String resolve(String hostname) {
         try {
             String address = InetAddress
-                .getByName("www.example.com")
+                .getByName(hostname)
                 .getHostAddress();
 
             logger.debug("Resolved: %s -> %s", hostname, address);
