@@ -74,16 +74,16 @@ public class NetworkTransport {
             this.logger = new FastLogger(String.format("NetworkTarget: %s", this.targetName));
             targets.put(this.targetName, this);
 
-            this.connect();
+            new Thread(this::connect).start();
         }
 
         public void connect() {
             this.client = new Socket();
 
             try {
+                this.client.connect(new InetSocketAddress(resolve(this.hostname), this.port), 5000);
                 this.client.setTcpNoDelay(true);
                 this.client.setSoTimeout(5000);
-                this.client.connect(new InetSocketAddress(resolve(this.hostname), this.port), 5000);
 
                 this.writer = new StreamByteWriter(this.client.getOutputStream());
 
@@ -91,11 +91,11 @@ public class NetworkTransport {
                 this.logger.info("Connected to %s successfully.", this.targetName);
                 Tray.sendNotification("Uninput Connected", String.format("Connected to %s successfully.", this.targetName), MessageType.INFO);
 
-                while (this.client.isConnected()) {
+                while (!this.client.isClosed()) {
+                    this.sendSync(UPingEvent.INSTANCE);
                     try {
                         TimeUnit.SECONDS.sleep(2);
                     } catch (InterruptedException ignored) {}
-                    this.send(UPingEvent.INSTANCE);
                 }
 
                 if (this.hadConnected) {
@@ -104,29 +104,36 @@ public class NetworkTransport {
 
                     this.hadConnected = false;
                 }
-            } catch (IOException ignored) {} finally {
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
                 try {
                     this.client.close();
                 } catch (IOException ignored) {}
+                this.client = null;
             }
 
             new Thread(() -> {
                 this.logger.info("Attempting to reconnect to %s...", this.targetName);
                 try {
-                    TimeUnit.SECONDS.sleep(10);
+                    TimeUnit.SECONDS.sleep(2);
                     this.connect();
                 } catch (Exception ignored) {}
             }).start();
         }
 
+        public synchronized void sendSync(UEvent event) throws IOException {
+            UEvent.serialize(event, this.writer);
+        }
+
         public synchronized void send(UEvent event) {
             try {
-                UEvent.serialize(event, this.writer);
+                this.sendSync(event);
             } catch (IOException ignored) {}
         }
 
         public boolean isAlive() {
-            return this.client.isConnected();
+            return this.client != null;
         }
 
     }
