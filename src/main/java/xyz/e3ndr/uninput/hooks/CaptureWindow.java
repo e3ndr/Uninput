@@ -1,17 +1,16 @@
 package xyz.e3ndr.uninput.hooks;
 
 import java.awt.Color;
+import java.awt.Frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-
-import javax.swing.JFrame;
 
 import xyz.e3ndr.uninput.Uninput;
 import xyz.e3ndr.uninput.events.UKeyboardPressEvent;
 import xyz.e3ndr.uninput.events.UKeyboardReleaseEvent;
 
 public class CaptureWindow {
-    private JFrame frame = new JFrame("Uninput");
+    private Frame frame = new Frame("Uninput");
 
     public void init() {
         this.frame.setUndecorated(true);
@@ -23,7 +22,9 @@ public class CaptureWindow {
         this.frame.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(KeyEvent e) {
-                if (Uninput.isMouseOnThisMachinesScreen) return;
+                if (Uninput.isMouseOnThisMachinesScreen) {
+                    return;
+                }
 
                 int vk = e.getKeyCode();
 
@@ -32,7 +33,9 @@ public class CaptureWindow {
 
             @Override
             public void keyReleased(KeyEvent e) {
-                if (Uninput.isMouseOnThisMachinesScreen) return;
+                if (Uninput.isMouseOnThisMachinesScreen) {
+                    return;
+                }
 
                 int vk = e.getKeyCode();
 
