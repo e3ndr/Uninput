@@ -137,8 +137,7 @@ public class Uninput {
 
 //                Point point = box.getSpawnLocation(event.getDisplay(), event.getBorder(), event.getDistance());
                 logger.info("Spawning cursor at %d,%d", centerX, centerY);
-
-                Inputter.start();
+                Inputter.start(centerX, centerY);
                 return;
             }
 
