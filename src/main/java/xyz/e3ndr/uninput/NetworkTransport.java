@@ -114,6 +114,7 @@ public class NetworkTransport {
             targets.put(this.targetName, this);
 
             this.client = new Client();
+            this.client.addListener(this);
             setupKryo(this.client.getKryo());
             this.client.start();
             try {
@@ -149,10 +150,13 @@ public class NetworkTransport {
             }
 
             new Thread(() -> {
-                try {
-                    TimeUnit.SECONDS.sleep(10);
-                    this.client.reconnect();
-                } catch (Exception ignored) {}
+                while (!this.client.isConnected()) {
+                    this.logger.info("Attempting to reconnect to %s...", this.targetName);
+                    try {
+                        TimeUnit.SECONDS.sleep(10);
+                        this.client.reconnect();
+                    } catch (Exception ignored) {}
+                }
             }).start();
         }
 
