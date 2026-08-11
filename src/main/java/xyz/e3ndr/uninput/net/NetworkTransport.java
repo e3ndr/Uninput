@@ -104,9 +104,7 @@ public class NetworkTransport {
 
                     this.hadConnected = false;
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
+            } catch (IOException ignored) {} finally {
                 try {
                     this.client.close();
                 } catch (IOException ignored) {}
