@@ -220,6 +220,11 @@ public class Uninput {
         String target = borderConfig.getTargetDisplay().split("=")[0];
         String displayName = borderConfig.getTargetDisplay().split("=")[1];
 
+        if (!network.isConnected(target)) {
+            logger.warn("Border %s was touched, but the target %s is not connected. Ignoring.", touched, target);
+            return;
+        }
+
         isMouseOnThisMachinesScreen = false;
         externalTarget = target;
 

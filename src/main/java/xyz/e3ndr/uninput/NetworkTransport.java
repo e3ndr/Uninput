@@ -63,6 +63,11 @@ public class NetworkTransport {
         server.bind(Uninput.config.port);
     }
 
+    public boolean isConnected(String targetName) {
+        Target target = this.targets.get(targetName);
+        return target != null && target.isAlive();
+    }
+
     public boolean send(String targetName, UEvent event) {
         Target target = this.targets.get(targetName);
 
